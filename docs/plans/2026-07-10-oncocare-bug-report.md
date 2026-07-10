@@ -1,5 +1,30 @@
 # 온코케어 앱 버그 리포트 Implementation Plan
 
+> ## ⚠ 이 계획서는 대체되었다 (2026-07-10)
+>
+> 작성 후 **저장소를 Supabase → Convex 로 바꿨다** (대표님: "임시 DB 는 슈파베이스를 안 씁니다").
+> 아래 Task 4~8 의 `supabase/migrations/*.sql`·`src/lib/supabase.ts`·`service_role`·RLS·signed URL 코드는
+> **구현되지 않았고 앞으로도 쓰지 않는다.** 그대로 따라가면 안 된다.
+>
+> 실제로 만들어진 것의 단일 소스:
+> - 설계 — `docs/2026-07-10-oncocare-bug-report-design.md` (Convex 로 갱신됨)
+> - 배포 — `docs/DEPLOY.md`
+> - 코드 — `convex/`(schema·reports·files·guard) + `src/`
+>
+> **살아 있는 부분**: Global Constraints 의 보안 요구(매직바이트·bcrypt·레이트리밋·오답 응답 통일·`NEXT_PUBLIC_` 금지)와
+> Task 1~3(스캐폴딩·순수 유틸)·Task 9(사이드바 링크). 저장소 관련 문장만 아래 대응표로 읽는다.
+>
+> | 계획서(Supabase) | 실제(Convex) |
+> |---|---|
+> | `service_role` 키 | `SERVER_SECRET` (Convex 함수 `assertServer()` 가 검사) |
+> | RLS ON + 정책 없음 | Convex 함수가 전부 `assertServer()` — 브라우저는 Convex 를 직접 부르지 않음 |
+> | private 버킷 + 60초 signed URL | Convex `_storage` + **서버 이미지 프록시** `/api/image/[id]/[index]` (URL 자체가 브라우저에 안 나감) |
+> | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | `CONVEX_URL` / `SERVER_SECRET` |
+> | `bug_reports` 테이블 | `bugReports` 테이블 (`convex/schema.ts`) |
+>
+> **★ Convex 가 더 강한 지점**: `storage.getUrl()` 은 공개이며 만료가 없다. 그래서 그 URL 을 브라우저에 주지 않고
+> 서버가 대신 받아 스트리밍한다 — 한 번 새어나간 링크가 영원히 사는 signed-URL 의 약점이 아예 없다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 링크를 아는 사람은 누구나 온코케어 앱 버그를 올릴 수 있고, 올린 본인과 시스템 관리자만 본문을 볼 수 있는 독립 웹앱을 만든다.
