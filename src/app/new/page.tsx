@@ -74,24 +74,16 @@ export default function NewPage() {
                className="mt-1 w-full text-sm" />
       </label>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label className="block">
-          <span className="text-xs text-slate-500">앱 버전 (선택)</span>
-          <input name="appVersion" maxLength={20} placeholder="1.0.3" className="mt-1 w-full rounded border px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-slate-500">OS (선택)</span>
-          <select name="platform" defaultValue="" className="mt-1 w-full rounded border px-3 py-2 text-sm">
-            <option value="">선택</option>
-            <option value="iOS">iOS</option>
-            <option value="Android">Android</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs text-slate-500">기기 (선택)</span>
-          <input name="deviceModel" maxLength={50} placeholder="iPhone 14" className="mt-1 w-full rounded border px-3 py-2 text-sm" />
-        </label>
-      </div>
+      {/* 앱 버전·기기는 묻지 않는다 (2026-07-10 대표님). 서버 스키마는 여전히 optional 이라
+          값이 안 오면 null 로 저장되고, 관리자 화면은 '기기 정보 없음' 으로 표시한다. */}
+      <label className="block sm:max-w-xs">
+        <span className="text-xs text-slate-500">OS (선택)</span>
+        <select name="platform" defaultValue="" className="mt-1 w-full rounded border px-3 py-2 text-sm">
+          <option value="">선택</option>
+          <option value="iOS">iOS</option>
+          <option value="Android">Android</option>
+        </select>
+      </label>
 
       {error && (
         <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
