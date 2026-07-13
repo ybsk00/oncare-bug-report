@@ -68,10 +68,14 @@ export default function NewPage() {
         </span>
       </label>
 
+      {/* 첨부는 선택 — 아이디어 제안처럼 올릴 화면이 없는 글도 있다(2026-07-13 외래팀 제보). */}
       <label className="block">
-        <span className="text-xs text-slate-500">첨부 이미지 (필수 · 1~3장 · jpg/png/webp · 5MB 이하)</span>
-        <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required
+        <span className="text-xs text-slate-500">첨부 이미지 (선택 · 최대 3장 · jpg/png/webp · 5MB 이하)</span>
+        <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple
                className="mt-1 w-full text-sm" />
+        <span className="mt-1 block text-[11px] text-slate-400">
+          버그는 화면 캡처가 있으면 훨씬 빨리 고칠 수 있어요. 아이디어 제안이라면 첨부 없이 등록해도 됩니다.
+        </span>
       </label>
 
       {/* 앱 버전·기기는 묻지 않는다 (2026-07-10 대표님). 서버 스키마는 여전히 optional 이라

@@ -19,7 +19,7 @@ export default defineSchema({
     body: v.string(),
     /** bcrypt 해시. 평문은 어디에도 저장하지 않는다. */
     passwordHash: v.string(),
-    /** 최소 1장. 이미지 자체는 Convex 파일 저장소에 있다. */
+    /** 0~3장(첨부는 선택). 이미지 자체는 Convex 파일 저장소에 있다. */
     imageIds: v.array(v.id('_storage')),
     appVersion: v.optional(v.string()),
     platform: v.optional(platformValidator),

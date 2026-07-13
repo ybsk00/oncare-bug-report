@@ -40,8 +40,9 @@ describe('validateImages', () => {
     expect(validateImages([file(png())])).toEqual({ ok: true });
   });
 
-  it('★ 이미지가 0장이면 거부 — 첨부는 필수', () => {
-    expect(validateImages([])).toEqual({ ok: false, error: '이미지를 최소 1장 첨부해 주세요.' });
+  // 정책 변경(2026-07-13): 아이디어 제안처럼 올릴 화면이 없는 글도 등록돼야 한다.
+  it('★ 이미지가 0장이어도 통과 — 첨부는 선택', () => {
+    expect(validateImages([])).toEqual({ ok: true });
   });
 
   it('3장 초과 거부', () => {

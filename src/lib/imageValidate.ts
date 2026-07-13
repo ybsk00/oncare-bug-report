@@ -19,10 +19,13 @@ export function sniffImageType(bytes: Uint8Array): ImageKind | null {
   return null;
 }
 
+/**
+ * 첨부는 **선택**이다 — 아이디어 제안처럼 올릴 화면이 없는 글도 있다(2026-07-13 외래팀 제보).
+ * 0장도 통과시키고, 개수·크기·실제 바이트 형식만 본다.
+ */
 export function validateImages(
   files: { bytes: Uint8Array; size: number }[],
 ): { ok: true } | { ok: false; error: string } {
-  if (files.length === 0) return { ok: false, error: '이미지를 최소 1장 첨부해 주세요.' };
   if (files.length > MAX_IMAGES) return { ok: false, error: '이미지는 최대 3장까지 첨부할 수 있습니다.' };
   for (const f of files) {
     if (f.size > MAX_IMAGE_BYTES) return { ok: false, error: '이미지 한 장의 크기는 5MB를 넘을 수 없습니다.' };

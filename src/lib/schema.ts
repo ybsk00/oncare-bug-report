@@ -16,6 +16,13 @@ export const reportInputSchema = z.object({
 
 export type ReportInput = z.infer<typeof reportInputSchema>;
 
+/** 작성자 수정 — 부서·이름·비밀번호는 바꾸지 않는다(작성자 동일성 유지). */
+export const reportEditSchema = z.object({
+  title: trimmed(200),
+  body: trimmed(5000),
+  platform: z.enum(['iOS', 'Android']).optional(),
+});
+
 export const adminPatchSchema = z.object({
   status: z.enum(['접수', '확인중', '수정완료', '재현불가']).optional(),
   adminNote: z.string().trim().max(2000).nullable().optional(),

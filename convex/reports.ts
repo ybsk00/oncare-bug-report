@@ -145,6 +145,53 @@ export const listForAdmin = query({
   },
 });
 
+/** 작성자 수정 — 비밀번호 확인은 Next.js(unlock 쿠키)가 이미 끝냈다. */
+export const updateByOwner = mutation({
+  args: {
+    secret: v.string(),
+    id: v.id('bugReports'),
+    title: v.string(),
+    body: v.string(),
+    platform: v.optional(platformValidator),
+    /** 남길 기존 이미지의 인덱스. 여기 없는 기존 이미지는 저장소에서도 지운다. */
+    keepIndexes: v.array(v.number()),
+    newImageIds: v.array(v.id('_storage')),
+  },
+  handler: async (ctx, args) => {
+    assertServer(args.secret);
+    const r = await ctx.db.get(args.id);
+    if (!r) throw new Error('없는 글입니다.');
+
+    const keep = r.imageIds.filter((_, i) => args.keepIndexes.includes(i));
+    const imageIds = [...keep, ...args.newImageIds];
+    if (imageIds.length > 3) throw new Error('이미지는 최대 3장까지 첨부할 수 있습니다.');
+
+    // 떨어져 나간 이미지는 파일까지 지운다 — 안 지우면 저장소에 영원히 남는다.
+    for (const id of r.imageIds) {
+      if (!keep.includes(id)) await ctx.storage.delete(id);
+    }
+
+    await ctx.db.patch(args.id, {
+      title: args.title,
+      body: args.body,
+      platform: args.platform,
+      imageIds,
+    });
+  },
+});
+
+/** 작성자·관리자 삭제. 첨부 파일도 함께 지운다. */
+export const remove = mutation({
+  args: { secret: v.string(), id: v.id('bugReports') },
+  handler: async (ctx, args) => {
+    assertServer(args.secret);
+    const r = await ctx.db.get(args.id);
+    if (!r) return;
+    for (const id of r.imageIds) await ctx.storage.delete(id);
+    await ctx.db.delete(args.id);
+  },
+});
+
 export const patch = mutation({
   args: {
     secret: v.string(),
