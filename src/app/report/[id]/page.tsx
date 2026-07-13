@@ -115,7 +115,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
           {busy ? '확인 중…' : '열람'}
         </button>
         <p className="text-[11px] text-slate-400">
-          열람 후 수정·삭제할 수 있습니다. 관리자는 비밀번호 없이 열람할 수 있습니다.
+          열람 후 수정·삭제할 수 있습니다. 개발팀은 별도 비밀번호로 신고 내역을 확인합니다.
         </p>
       </form>
     );

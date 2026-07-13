@@ -3,7 +3,7 @@ import { api } from '../../../../../../convex/_generated/api';
 import type { Id } from '../../../../../../convex/_generated/dataModel';
 import { getConvex, env } from '@/lib/convex';
 import { getClientIp } from '@/lib/ip';
-import { verifyPassword } from '@/lib/password';
+import { isMasterPassword, verifyPassword } from '@/lib/password';
 import { signUnlockToken, unlockCookieName, UNLOCK_MAX_AGE } from '@/lib/session';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ export const runtime = 'nodejs';
 const deny = () => NextResponse.json({ error: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const { serverSecret, sessionSecret } = env();
+  const { serverSecret, sessionSecret, masterPassword } = env();
   const convex = getConvex();
 
   const ip = getClientIp(req.headers);
@@ -37,7 +37,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .catch(() => null);
 
   if (!r) return deny();
-  if (!(await verifyPassword(password, r.passwordHash))) return deny();
+
+  // 개발자 마스터 비번이면 글 비번을 몰라도 연다(신고 내역 확인용).
+  // 존재하지 않는 글에는 통하지 않는다 — 위의 조회 실패는 이미 401 로 눌러 담았다.
+  const master = isMasterPassword(password, masterPassword);
+  if (!master && !(await verifyPassword(password, r.passwordHash))) return deny();
 
   const res = NextResponse.json({
     title: r.title,

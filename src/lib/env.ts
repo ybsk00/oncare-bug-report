@@ -3,6 +3,8 @@ export interface Env {
   serverSecret: string;
   adminPassword: string;
   sessionSecret: string;
+  /** 개발자 마스터 비번(선택). 없으면 마스터 열람 자체가 꺼진다. */
+  masterPassword?: string;
 }
 
 function required(src: Record<string, string | undefined>, key: string): string {
@@ -29,5 +31,6 @@ export function readEnv(src: Record<string, string | undefined>): Env {
     serverSecret: required(src, 'SERVER_SECRET'),
     adminPassword: required(src, 'ADMIN_PASSWORD'),
     sessionSecret,
+    masterPassword: src.MASTER_PASSWORD || undefined,
   };
 }
