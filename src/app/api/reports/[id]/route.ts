@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { api } from '../../../../../convex/_generated/api';
 import type { Id } from '../../../../../convex/_generated/dataModel';
 import { getConvex, env } from '@/lib/convex';
-import { ADMIN_COOKIE, unlockCookieName, verifyAdminToken, verifyUnlockToken } from '@/lib/session';
+import {
+  ADMIN_COOKIE, unlockCookieName, verifyAdminToken, verifyMasterUnlockToken, verifyUnlockToken,
+} from '@/lib/session';
 import { reportEditSchema } from '@/lib/schema';
 import { validateImages, sniffImageType } from '@/lib/imageValidate';
 
@@ -83,9 +85,25 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return new NextResponse(null, { status: 204 });
 }
 
+/**
+ * 삭제 권한 = 관리자 쿠키 또는 **마스터 비번으로 연** 열람 쿠키.
+ * 작성자 비번 세션으로는 지울 수 없다 — 2026-07-14 실신고 10건이 작성자 삭제로
+ * 전량 유실된 뒤(백업 없음 → 복구 불가) 삭제를 개발자 전용으로 좁혔다.
+ */
+async function authorizeDelete(req: NextRequest, id: string): Promise<boolean> {
+  const { sessionSecret } = env();
+  if (await verifyAdminToken(req.cookies.get(ADMIN_COOKIE)?.value, sessionSecret)) return true;
+  return verifyMasterUnlockToken(req.cookies.get(unlockCookieName(id))?.value, id, sessionSecret);
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const { serverSecret } = env();
-  if (!(await authorize(req, params.id))) return denied();
+  if (!(await authorizeDelete(req, params.id))) {
+    return NextResponse.json(
+      { error: '작성자는 글을 삭제할 수 없습니다. 삭제가 필요하면 개발팀에 요청해 주세요.' },
+      { status: 403 },
+    );
+  }
 
   // 실패를 삼키면 안 된다 — 삭제되지 않았는데 204 를 주면 화면은 "삭제됨"으로 보인다.
   try {

@@ -44,6 +44,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!master && !(await verifyPassword(password, r.passwordHash))) return deny();
 
   const res = NextResponse.json({
+    // 삭제는 마스터 세션에서만 가능 — 화면이 이 값으로 삭제 버튼을 숨긴다.
+    canDelete: master,
     title: r.title,
     department: r.department,
     reporterName: r.reporterName,
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
 
   // 이미지 프록시가 이 쿠키를 확인한다. 이미지 URL 자체는 브라우저에 나가지 않는다.
-  res.cookies.set(unlockCookieName(params.id), await signUnlockToken(params.id, sessionSecret), {
+  res.cookies.set(unlockCookieName(params.id), await signUnlockToken(params.id, sessionSecret, master), {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',

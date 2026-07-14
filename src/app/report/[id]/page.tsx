@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ImageGrid } from '@/components/ImageGrid';
 
 interface Unlocked {
+  canDelete: boolean;
   title: string;
   department: string;
   reporterName: string;
@@ -115,7 +116,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
           {busy ? '확인 중…' : '열람'}
         </button>
         <p className="text-[11px] text-slate-400">
-          열람 후 수정·삭제할 수 있습니다. 개발팀은 별도 비밀번호로 신고 내역을 확인합니다.
+          열람 후 수정할 수 있습니다. 삭제는 개발팀만 가능하니 필요하면 요청해 주세요.
         </p>
       </form>
     );
@@ -215,14 +216,17 @@ export default function ReportPage({ params }: { params: { id: string } }) {
                 className="rounded-lg border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-50">
           수정하기
         </button>
-        <button onClick={remove} disabled={busy}
-                className="rounded-lg border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50">
-          삭제하기
-        </button>
+        {data.canDelete && (
+          <button onClick={remove} disabled={busy}
+                  className="rounded-lg border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50">
+            삭제하기
+          </button>
+        )}
       </div>
 
       <p className="text-[11px] text-slate-400">
         열람·수정 권한은 10분간 유지됩니다. 이후에는 비밀번호를 다시 입력해야 합니다.
+        삭제는 개발팀만 할 수 있습니다.
       </p>
 
       {data.adminNote && (
