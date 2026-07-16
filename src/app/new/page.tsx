@@ -2,17 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ImagePicker } from '@/components/ImagePicker';
 
 export default function NewPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
+    images.forEach((f) => fd.append('images', f));
     try {
       const res = await fetch('/api/reports', { method: 'POST', body: fd });
       const data = await res.json().catch(() => ({}));
@@ -69,14 +72,14 @@ export default function NewPage() {
       </label>
 
       {/* 첨부는 선택 — 아이디어 제안처럼 올릴 화면이 없는 글도 있다(2026-07-13 외래팀 제보). */}
-      <label className="block">
+      <div className="block">
         <span className="text-xs text-slate-500">첨부 이미지 (선택 · 최대 3장 · jpg/png/webp · 5MB 이하)</span>
-        <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple
-               className="mt-1 w-full text-sm" />
+        <ImagePicker max={3} files={images} onChange={setImages} />
         <span className="mt-1 block text-[11px] text-slate-400">
-          버그는 화면 캡처가 있으면 훨씬 빨리 고칠 수 있어요. 아이디어 제안이라면 첨부 없이 등록해도 됩니다.
+          버그는 화면 캡처가 있으면 훨씬 빨리 고칠 수 있어요. 한 장씩 골라도 계속 추가됩니다.
+          아이디어 제안이라면 첨부 없이 등록해도 됩니다.
         </span>
-      </label>
+      </div>
 
       {/* 앱 버전·기기는 묻지 않는다 (2026-07-10 대표님). 서버 스키마는 여전히 optional 이라
           값이 안 오면 null 로 저장되고, 관리자 화면은 '기기 정보 없음' 으로 표시한다. */}

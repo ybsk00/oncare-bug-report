@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ImageGrid } from '@/components/ImageGrid';
+import { ImagePicker } from '@/components/ImagePicker';
 
 interface Unlocked {
   canDelete: boolean;
@@ -26,6 +27,16 @@ export default function ReportPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  // 수정 폼 상태 — keep 은 남길 기존 이미지 인덱스, newImages 는 새로 추가할 파일.
+  const [keep, setKeep] = useState<number[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+
+  const startEditing = () => {
+    setKeep(Array.from({ length: data?.imageCount ?? 0 }, (_, i) => i));
+    setNewImages([]);
+    setError(null);
+    setEditing(true);
+  };
 
   const unlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,17 +60,18 @@ export default function ReportPage({ params }: { params: { id: string } }) {
 
   const save = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // 새 이미지를 고른 뒤 유지 체크를 되살리면 합계가 3장을 넘을 수 있다 — 서버 400 전에 여기서 막는다.
+    if (keep.length + newImages.length > 3) {
+      setError('이미지는 유지하는 것과 합쳐 최대 3장까지입니다. 새 이미지를 줄이거나 유지 체크를 해제해 주세요.');
+      return;
+    }
     setBusy(true);
     setError(null);
-    const form = e.currentTarget;
-    const fd = new FormData(form);
+    const fd = new FormData(e.currentTarget);
 
     // 체크가 해제된 기존 이미지는 삭제된다. 남길 인덱스만 서버로 보낸다.
-    const keep = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="keep"]:checked')).map((el) =>
-      Number(el.value),
-    );
-    fd.delete('keep');
     fd.set('keepIndexes', JSON.stringify(keep));
+    newImages.forEach((f) => fd.append('images', f));
 
     try {
       const res = await fetch(`/api/reports/${params.id}`, { method: 'PATCH', body: fd });
@@ -158,7 +170,14 @@ export default function ReportPage({ params }: { params: { id: string } }) {
             <div className="space-y-2">
               {Array.from({ length: data.imageCount }, (_, i) => (
                 <label key={i} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="keep" value={i} defaultChecked />
+                  <input
+                    type="checkbox" checked={keep.includes(i)}
+                    onChange={(e) =>
+                      setKeep((prev) =>
+                        e.target.checked ? [...prev, i].sort((a, b) => a - b) : prev.filter((k) => k !== i),
+                      )
+                    }
+                  />
                   <span>{i + 1}번 이미지 유지</span>
                 </label>
               ))}
@@ -166,11 +185,12 @@ export default function ReportPage({ params }: { params: { id: string } }) {
           </fieldset>
         )}
 
-        <label className="block">
-          <span className="text-xs text-slate-500">이미지 추가 (선택 · 총 3장까지)</span>
-          <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple
-                 className="mt-1 w-full text-sm" />
-        </label>
+        <div className="block">
+          <span className="text-xs text-slate-500">
+            이미지 추가 (선택 · 유지하는 이미지와 합쳐 총 3장까지)
+          </span>
+          <ImagePicker max={Math.max(0, 3 - keep.length)} files={newImages} onChange={setNewImages} />
+        </div>
 
         {error && (
           <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
@@ -212,7 +232,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       )}
 
       <div className="flex gap-2 border-t pt-3">
-        <button onClick={() => setEditing(true)} disabled={busy}
+        <button onClick={startEditing} disabled={busy}
                 className="rounded-lg border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-50">
           수정하기
         </button>
